@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>🛡️ Security Operations Center Dashboard</h2>
+    
+    {% if logs %}
+        <h3>Login Attempts Log</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Decision</th>
+                    <th>Reason</th>
+                    <th>Confidence</th>
+                    <th>Fraud Simulated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.User }}</td>
+                    <td>{{ log.Decision }}</td>
+                    <td>{{ log.Reason }}</td>
+                    <td>{{ log.Confidence }}</td>
+                    <td>{{ log.FraudSimulated }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="display: flex; gap: 30px; margin-top: 40px;">
+            <div style="width: 50%;">
+                <h3>📊 Decision Distribution</h3>
+                <canvas id="decisionChart"></canvas>
+            </div>
+            <div style="width: 50%;">
+                 <h3>Fraud Simulation Flags</h3>
+                <canvas id="fraudChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            // Decision Chart
+            const decisionCtx = document.getElementById('decisionChart').getContext('2d');
+            new Chart(decisionCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ decision_labels | tojson }},
+                    datasets: [{
+                        label: '# of Decisions',
+                        data: {{ decision_values | tojson }},
+                        backgroundColor: 'rgba(115, 154, 185, 0.6)',
+                        borderColor: 'rgba(115, 154, 185, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+
+            // Fraud Chart
+            const fraudCtx = document.getElementById('fraudChart').getContext('2d');
+            new Chart(fraudCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ fraud_labels | tojson }},
+                    datasets: [{
+                        label: 'Fraud Simulation',
+                        data: {{ fraud_values | tojson }},
+                        backgroundColor: ['rgba(76, 175, 80, 0.6)', 'rgba(244, 67, 54, 0.6)'],
+                    }]
+                }
+            });
+        </script>
+    {% else %}
+        <p>No login attempts recorded yet.</p>
+    {% endif %}
+{% endblock %}

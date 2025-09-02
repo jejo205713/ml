@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Specific styles for this page */
+    .how-it-works-container {
+        display: flex;
+        gap: 40px;
+    }
+    .simulation-controls {
+        width: 400px;
+        flex-shrink: 0;
+    }
+    .simulation-results {
+        flex-grow: 1;
+    }
+    .form-group {
+        margin-bottom: 1.2em;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5em;
+        color: var(--accent-color);
+    }
+    .form-group input[type="text"], .form-group input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-light);
+        box-sizing: border-box;
+    }
+    .form-group input[type="range"] {
+        width: 100%;
+    }
+    .slider-value {
+        font-weight: bold;
+        color: var(--text-light);
+    }
+    .results-card {
+        background-color: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    pre {
+        background-color: var(--bg-dark);
+        padding: 15px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .btn-secondary {
+        background-color: #555;
+        color: var(--text-light);
+    }
+    .btn-secondary:hover {
+        background-color: #666;
+    }
+</style>
+
+<h2>🔒 How Behavior-Based Authentication Works</h2>
+<p>
+    Use the controls below to simulate a user session. The system analyzes these behavioral and environmental factors, calculates a risk score, and shows if access should be granted or denied.
+</p>
+
+<div class="how-it-works-container">
+    <!-- ================== COLUMN 1: SIMULATION CONTROLS ================== -->
+    <div class="simulation-controls">
+        <h3>Simulation Parameters</h3>
+        <form method="POST" action="{{ url_for('how_it_works') }}">
+            <!-- Behavioral Inputs -->
+            <div class="form-group">
+                <label for="latency_mean">Keystroke Latency (ms): <span id="latency_val" class="slider-value">210</span></label>
+                <input type="range" id="latency_mean" name="latency_mean" min="150" max="400" value="210" oninput="document.getElementById('latency_val').innerText = this.value;">
+            </div>
+            <div class="form-group">
+                <label for="variance">Keystroke Variance: <span id="variance_val" class="slider-value">35</span></label>
+                <input type="range" id="variance" name="variance" min="20" max="60" value="35" oninput="document.getElementById('variance_val').innerText = this.value;">
+            </div>
+            <div class="form-group">
+                <label for="swipe_speed">Swipe Speed: <span id="swipe_speed_val" class="slider-value">950</span></label>
+                <input type="range" id="swipe_speed" name="swipe_speed" min="850" max="1550" value="950" oninput="document.getElementById('swipe_speed_val').innerText = this.value;">
+            </div>
+             <div class="form-group">
+                <label for="swipe_pressure">Swipe Pressure: <span id="swipe_pressure_val" class="slider-value">0.65</span></label>
+                <input type="range" id="swipe_pressure" name="swipe_pressure" min="0.35" max="0.8" value="0.65" step="0.01" oninput="document.getElementById('swipe_pressure_val').innerText = this.value;">
+            </div>
+
+            <!-- Contextual Inputs -->
+            <div class="form-group">
+                <label for="geo_distance">Distance from SIM (km): <span id="geo_dist_val" class="slider-value">2</span></label>
+                <input type="range" id="geo_distance" name="geo_distance" min="0" max="100" value="2" oninput="document.getElementById('geo_dist_val').innerText = this.value;">
+            </div>
+             <div class="form-group">
+                <label for="failed_logins">Failed Logins: <span id="failed_logins_val" class="slider-value">0</span></label>
+                <input type="range" id="failed_logins" name="failed_logins" min="0" max="6" value="0" oninput="document.getElementById('failed_logins_val').innerText = this.value;">
+            </div>
+
+            <!-- Boolean Flags -->
+            <div class="form-group">
+                 <input type="checkbox" name="new_device" id="new_device">
+                 <label for="new_device">New Device?</label>
+            </div>
+             <div class="form-group">
+                 <input type="checkbox" name="new_ip" id="new_ip">
+                 <label for="new_ip">New IP Address?</label>
+            </div>
+             <div class="form-group">
+                 <input type="checkbox" name="vpn" id="vpn">
+                 <label for="vpn">VPN Detected?</label>
+            </div>
+            
+            <hr style="border-color: var(--border-color); margin: 2em 0;">
+
+            <button type="submit" name="action" value="simulate" class="btn">▶️ Run Authentication Simulation</button>
+            <button type="submit" name="action" value="train" class="btn btn-secondary" style="margin-top: 10px;">🛠️ Train / Retrain Model</button>
+        </form>
+    </div>
+
+    <!-- ================== COLUMN 2: SIMULATION RESULTS ================== -->
+    <div class="simulation-results">
+        <h3>Simulation Results</h3>
+        {% if results %}
+            <!-- Training Output -->
+            {% if results.training_output %}
+                <div class="results-card">
+                    <h4>Training Script Output</h4>
+                    {% if results.training_output.success %}
+                        <p style="color: var(--success-color);">✅ Training script executed successfully!</p>
+                    {% else %}
+                        <p style="color: var(--error-color);">❌ Training script failed.</p>
+                    {% endif %}
+                    <h5>Standard Output:</h5>
+                    <pre><code>{{ results.training_output.stdout or "No output." }}</code></pre>
+                    <h5>Standard Error:</h5>
+                    <pre><code>{{ results.training_output.stderr or "No errors." }}</code></pre>
+                </div>
+            {% endif %}
+
+            <!-- Simulation Output -->
+            {% if results.decision %}
+                <div class="results-card">
+                    <h4>🔹 Risk Decision</h4>
+                    <p><strong>Decision:</strong> {{ results.emoji }} {{ results.decision.decision }}</p>
+                    <p><strong>Reason:</strong> {{ results.decision.reason }}</p>
+                    <p><strong>Confidence Score:</strong> {{ "%.2f"|format(results.confidence) }}</p>
+                </div>
+                <div class="results-card">
+                    <h4>📊 Feature Visualization</h4>
+                    <canvas id="featureChart"></canvas>
+                </div>
+                <div class="results-card">
+                    <h4>Raw Session Input</h4>
+                    <pre><code>{{ results.raw_session_json }}</code></pre>
+                </div>
+                <div class="results-card">
+                    <h4>Extracted Features</h4>
+                    <pre><code>{{ results.features_json }}</code></pre>
+                </div>
+
+                <script>
+                    const ctx = document.getElementById('featureChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: {{ results.chart_data.labels | tojson }},
+                            datasets: [{
+                                label: 'Feature Value',
+                                data: {{ results.chart_data.values | tojson }},
+                                backgroundColor: 'rgba(115, 154, 185, 0.6)',
+                                borderColor: 'rgba(115, 154, 185, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+                    });
+                </script>
+            {% endif %}
+        {% else %}
+            <div class="results-card">
+                <p>Run a simulation to see the results here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

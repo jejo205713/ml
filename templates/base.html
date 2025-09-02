@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Secure Bank</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for SOC Dashboard charts -->
+    {% if chart_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endif %}
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h1>🏦 Secure Bank</h1>
+            <ul>
+                <li><a href="{{ url_for('login') }}" class="{{ 'active' if request.endpoint == 'login' else '' }}">Login</a></li>
+                <li><a href="{{ url_for('bank_dashboard') }}" class="{{ 'active' if request.endpoint == 'bank_dashboard' else '' }}">Bank Dashboard</a></li>
+                <li><a href="{{ url_for('soc_dashboard') }}" class="{{ 'active' if request.endpoint == 'soc_dashboard' else '' }}">SOC Dashboard</a></li>
+                <li><a href="{{ url_for('how_it_works') }}" class="{{ 'active' if request.endpoint == 'how_it_works' else '' }}">How It Works</a></li>
+                 {% if session.get('authenticated') %}
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
